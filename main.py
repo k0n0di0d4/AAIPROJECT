@@ -1,16 +1,14 @@
 import pickle
-from random import random, seed
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_predict
-from sklearn.metrics import accuracy_score, mean_absolute_error, plot_confusion_matrix, roc_curve
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, mean_absolute_error, plot_confusion_matrix, roc_curve, roc_auc_score
 from sklearn.linear_model import BayesianRidge
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
-from yellowbrick.datasets import load_energy
 from yellowbrick.model_selection import LearningCurve
 
 #Random Forest Regression is a supervised learning algorithm that uses ensemble learning method for regression
@@ -25,8 +23,10 @@ def Randomized_Forest():
   X = dataset.drop(columns='output')
   Y = dataset['output']
 
+  #intialize empty array and set best_precision to 0
   precision_array = []
   best_precision = 0
+
   X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3)
   model1 = RandomForestClassifier()
   hist = model1.fit(X_train, Y_train)
@@ -37,8 +37,6 @@ def Randomized_Forest():
     precision_array.append(precision)
     if precision > best_precision:
       best_precision = precision
-      with open('heart_failure.pickle', 'wb') as file:
-        pickle.dump(model1, file)
 
   #print out the the most accurate precision
   print(best_precision)
@@ -53,6 +51,20 @@ def Randomized_Forest():
 
   #Confusion Matrix
   plot_confusion_matrix(model1, X_test, Y_test)
+  plt.show()
+
+  #ROC and AUC curve
+  y_probabilities = model1.predict_proba(X_test)[:, 1]
+  false_positive_rate, true_positive_rate, threshold = roc_curve(Y_test, y_probabilities)
+  plt.figure(figsize=(10, 6))
+  plt.title('ROC for decision tree')
+  plt.plot(false_positive_rate, true_positive_rate, linewidth=5, color='green')
+  plt.plot([0, 1], ls='--', linewidth=5)
+  plt.plot([0, 0], [1, 0], c='.5')
+  plt.plot([1, 1], c='.5')
+  plt.text(0.2, 0.6, 'AUC: {:.2f}'.format(roc_auc_score(Y_test, y_probabilities)), size=16)
+  plt.xlabel('False Positive Rate')
+  plt.ylabel('True Positive Rate')
   plt.show()
 
   return hist
