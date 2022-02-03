@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn import preprocessing
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_absolute_error, plot_confusion_matrix
+from sklearn.model_selection import train_test_split, cross_val_predict
+from sklearn.metrics import accuracy_score, mean_absolute_error, plot_confusion_matrix, roc_curve
 from sklearn.linear_model import BayesianRidge
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
@@ -27,10 +27,11 @@ def Randomized_Forest():
 
   precision_array = []
   best_precision = 0
+  X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3)
+  model1 = RandomForestClassifier()
+  hist = model1.fit(X_train, Y_train)
+
   for i in range(len(dataset.index)):
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3)
-    model1 = RandomForestClassifier()
-    model1.fit(X_train, Y_train)
     Y_pred = model1.predict(X_test)
     precision = accuracy_score(Y_test, Y_pred)
     precision_array.append(precision)
@@ -54,6 +55,8 @@ def Randomized_Forest():
   plot_confusion_matrix(model1, X_test, Y_test)
   plt.show()
 
+  return hist
+
 
 
 def Bayesian_Regression():
@@ -64,14 +67,14 @@ def Bayesian_Regression():
 
   precision_array = []
   best_precision = 0
+  # Train and test variables
+  X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1)
+
+  # Creating and training model
+  model = BayesianRidge()
+  hist = model.fit(X_train, Y_train)
+
   for i in range(len(datasett.index)):
-    # Train and test variables
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1)
-
-    # Creating and training model
-    model = BayesianRidge()
-    model.fit(X_train, Y_train)
-
     # Predicting based on test data
     Y_prediction = model.predict(X_test)
     precision = mean_absolute_error(Y_test, Y_prediction)
@@ -87,6 +90,7 @@ def Bayesian_Regression():
   visualizer = LearningCurve(model, scoring='r2')
   visualizer.fit(X, Y)
   visualizer.show()
+  return hist
 
 def Neural_Network():
   dataset = pd.read_csv('heart.csv')
@@ -116,7 +120,7 @@ def Neural_Network():
   accuracy = model.evaluate(X_test, Y_test)[1]
   print(accuracy)
 
-  #data loss plot
+  #model accuracy and prediction plot
   plt.plot(hist.history['loss'])
   plt.plot(hist.history['val_loss'])
   plt.title('Model loss')
@@ -124,7 +128,15 @@ def Neural_Network():
   plt.xlabel('Epoch')
   plt.legend(['Train', 'Val'], loc='upper right')
   plt.show()
+  return hist
 
-Randomized_Forest()
-Bayesian_Regression()
-Neural_Network()
+
+forest_history = Randomized_Forest()
+bayesian_history = Bayesian_Regression()
+neu_net_history = Neural_Network()
+
+plt.title("Accuracy")
+
+plt.plot(neu_net_history.history['accuracy'], label = 'Neural Network')
+plt.ylim(0, 1)
+plt.show()
